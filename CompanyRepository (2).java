@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api") // Perfect routing
+@RequestMapping("/api") 
 public class MyController {
 
     @Autowired UserRepository userRepository;
