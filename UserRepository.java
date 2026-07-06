@@ -12,7 +12,7 @@ public class Company {
     private double minCgpa;
     private int seats;
 
-    // Getters and Setters
+    
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     
