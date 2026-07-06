@@ -1,6 +1,6 @@
 package com.example.demo;
 
-import jakarta.persistence.*; // MUKKIYAM: Ithu 'jakarta' nu irukanum
+import jakarta.persistence.*; 
 import java.time.LocalDateTime;
 
 @Entity
@@ -14,7 +14,7 @@ public class AllocationHistory {
     private String companyName;
     private LocalDateTime timestamp;
 
-    // Default constructor is required by JPA
+    
     public AllocationHistory() {}
 
     public AllocationHistory(String studentName, String companyName) {
@@ -23,7 +23,7 @@ public class AllocationHistory {
         this.timestamp = LocalDateTime.now();
     }
 
-    // Getters and Setters
+    
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
