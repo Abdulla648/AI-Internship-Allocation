@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Bean;
 @SpringBootApplication
 public class DemoApplication {
 
-    // Ithu thaan namma miss panna Main Method!
+    
     public static void main(String[] args) {
         SpringApplication.run(DemoApplication.class, args);
     }
