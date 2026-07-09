@@ -1,7 +1,314 @@
-package com.example.demo.repository;
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>AI Allocation Dashboard PRO</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #0f172a; color: white; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { position: fixed; top: 0; left: -350px; width: 320px; height: 100%; background-color: #1e293b; border-right: 1px solid #334155; display: flex; flex-direction: column; padding: 20px; box-shadow: 5px 0 15px rgba(0,0,0,0.5); z-index: 1000; transition: left 0.4s ease; box-sizing: border-box; }
+        .sidebar.open { left: 0; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 10px; }
+        .close-btn { font-size: 22px; color: #ef4444; cursor: pointer; font-weight: bold; }
+        .history-toggle-btn { position: fixed; top: 25px; left: 25px; background-color: #1e293b; color: #2dd4bf; border: 1px solid #334155; padding: 10px 15px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; z-index: 900; }
+        .btn-clear-all { background-color: #ef4444; color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; margin-bottom: 10px; }
+        
+        /* 3-Dots Menu CSS */
+        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #334155; border-radius: 6px; margin-bottom: 5px; transition: 0.2s; position: relative; }
+        .history-item:hover { background-color: #0f172a; }
+        .history-title { flex-grow: 1; cursor: pointer; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #cbd5e1; }
+        .history-actions { position: relative; display: inline-block; }
+        .dots-btn { background: none; border: none; color: #94a3b8; font-size: 18px; cursor: pointer; padding: 0 5px; font-weight: bold; }
+        .dots-btn:hover { color: white; }
+        .dropdown-content { display: none; position: absolute; right: 0; top: 20px; background-color: #0f172a; min-width: 100px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5); z-index: 1001; border-radius: 6px; border: 1px solid #334155; overflow: hidden; }
+        .dropdown-content a { color: white; padding: 10px 12px; text-decoration: none; display: block; font-size: 12px; cursor: pointer; border-bottom: 1px solid #1e293b; }
+        .dropdown-content a:hover { background-color: #3b82f6; }
+        .dropdown-content a:last-child { border-bottom: none; }
+        .show { display: block; }
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import com.example.demo.model.Company; // Intha line romba mukkiyam!
+        .main-content { flex-grow: 1; overflow-y: auto; padding: 40px; text-align: center; }
+        .container { background-color: #1e293b; padding: 40px; border-radius: 15px; display: inline-block; width: 95%; max-width: 1200px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+        h1 { color: #2dd4bf; margin-bottom: 5px; font-size: 30px; }
+        .subtitle { color: #94a3b8; font-size: 14px; margin-bottom: 30px; }
+        .controls-row { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 30px; }
+        .engine-box { flex: 2; border: 1px dashed #3b82f6; padding: 25px; border-radius: 12px; background-color: #0f172a; display: flex; flex-direction: column; align-items: center; justify-content: center;}
+        .chart-box { flex: 1; border: 1px solid #334155; border-radius: 12px; background-color: #0f172a; padding: 15px; height: 160px; }
+        .btn-ai { background-color: #3b82f6; color: white; font-size: 18px; padding: 15px 40px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-bottom: 15px;}
+        .btn-ai:hover { background-color: #2563eb; }
+        
+        table { width: 100%; border-collapse: collapse; background-color: #0f172a; border-radius: 10px; overflow: hidden; margin-bottom: 30px; border: 1px solid #334155; table-layout: fixed; }
+        th, td { padding: 15px; border: 1px solid #334155; font-size: 13px; }
+        th { background-color: #3b82f6; color: white; font-weight: bold; font-size: 14px; text-align: center; }
+        th:nth-child(1) { width: 16%; } th:nth-child(2) { width: 28%; } th:nth-child(3) { width: 28%; } th:nth-child(4) { width: 28%; }
+        .student-cell { font-weight: bold; color: #2dd4bf; font-size: 16px; text-align: center; vertical-align: middle; background-color: #111c30; }
+        .sector-cell { vertical-align: top; padding: 10px; background-color: #0f172a; }
+        .sector-scroll-box { max-height: 175px; overflow-y: auto; padding-right: 4px; }
+        .sector-scroll-box::-webkit-scrollbar { width: 5px; } .sector-scroll-box::-webkit-scrollbar-track { background: #0f172a; } .sector-scroll-box::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+        .company-item-block { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; margin-bottom: 6px; border-radius: 6px; background-color: #1e293b; border: 1px solid #334155; font-size: 12px; }
+        .prod-block { border-left: 4px solid #a855f7; } .serv-block { border-left: 4px solid #f59e0b; } .gov-block { border-left: 4px solid #06b6d4; }
+        .c-name { font-weight: bold; color: #f8fafc; } .c-match { font-size: 11px; color: #94a3b8; font-weight: 500; background: #0f172a; padding: 2px 6px; border-radius: 4px; border: 1px solid #1e293b; }
 
-public interface CompanyRepository extends JpaRepository<Company, Long> {
-}
+        .forms-row { display: flex; gap: 30px; }
+        .form-box { flex: 1; background: #0f172a; padding: 30px; border-radius: 12px; text-align: left; border: 1px solid #334155; display: flex; flex-direction: column; }
+        .form-box input, .form-box select { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #334155; background-color: #1e293b; color: white; box-sizing: border-box; }
+        .btn-register { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; margin-top: auto; }
+        .bg-cyan { background-color: #2dd4bf; color: #0f172a; } .bg-orange { background-color: #f59e0b; color: #0f172a; }
+    </style>
+</head>
+<body>
+
+    <button class="history-toggle-btn" onclick="openHistory()">☰ History</button>
+    <div class="sidebar" id="historySidebar">
+        <div class="sidebar-header">
+            <h2 style="margin:0; font-size:18px;">⏳ Allocation History</h2>
+            <span class="close-btn" onclick="closeHistory()">✖</span>
+        </div>
+        <button class="btn-clear-all" onclick="clearAllHistory()">🗑️ Clear All History</button>
+        <ul id="historyList" style="list-style:none; padding:0; overflow-y:auto; flex-grow:1;"></ul>
+    </div>
+
+    <div class="main-content">
+        <div class="container">
+            <h1>AI-Based Smart Allocation Engine 🚀</h1>
+            <div class="subtitle">PM Internship Scheme - Advanced Analytics Dashboard Sector-Wise</div>
+            <div class="controls-row">
+                <div class="engine-box">
+                    <button onclick="runAIEngine()" class="btn-ai">Run AI Allocation Engine ⚙️</button>
+                </div>
+                <div class="chart-box"><canvas id="allocationChart"></canvas></div>
+            </div>
+            <table id="allocationTable">
+                <thead>
+                    <tr>
+                        <th>Student Name</th>
+                        <th>Product Based 💻 (Company | Match)</th>
+                        <th>Service Based 🏢 (Company | Match)</th>
+                        <th>Government Sector 🏛️ (Company | Match)</th>
+                    </tr>
+                </thead>
+                <tbody><tr><td colspan="4" style="color:#94a3b8; padding:25px;">No data available. Register and Run Engine.</td></tr></tbody>
+            </table>
+            
+            <div class="forms-row">
+                <form id="studentForm" class="form-box">
+                    <h3>🎓 Add Student</h3>
+                    <input name="name" id="inName" placeholder="Name" required>
+                    <input name="email" placeholder="Email" required>
+                    <input name="skills" placeholder="Skills (Java, Python)" required>
+                    <input name="cgpa" type="number" step="0.1" placeholder="CGPA" required>
+                    <select name="preference">
+                        <option value="">-- Preference --</option>
+                        <option value="Google">Google</option>
+                        <option value="Amazon">Amazon</option>
+                        <option value="C-DAC">C-DAC</option>
+                        <option value="NIC">NIC</option>
+                        <option value="TCS">TCS</option>
+                    </select>
+                    <button type="submit" class="btn-register bg-cyan">Register Student</button>
+                </form>
+                
+                <form id="companyForm" class="form-box">
+                    <h3>🏢 Add Company</h3>
+                    <input name="companyName" placeholder="Company Name (e.g., Google, TCS, DRDO)" required>
+                    <input name="requiredSkills" placeholder="Required Skills" required>
+                    <input name="minCgpa" type="number" step="0.1" placeholder="Min CGPA" required>
+                    <input name="seats" type="number" placeholder="Total Seats" required>
+                    <button type="submit" class="btn-register bg-orange">Register Company</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const productBrands = ["Google", "Microsoft", "Amazon", "Zoho", "Apple", "Meta", "Netflix", "Tesla", "Uber", "Airbnb", "Atlassian", "Adobe", "Oracle", "SAP", "Salesforce", "Intuit", "Cisco", "Intel", "NVIDIA", "VMware", "ServiceNow", "Snowflake", "Palantir", "Freshworks", "Postman"];
+        const governmentBrands = ["NIC", "C-DAC", "BEL", "ISRO", "DRDO", "CRIS", "BSNL", "MTNL", "HAL", "BHEL", "ECIL", "ITI Limited", "TCIL", "RailTel", "UIDAI", "NPCI", "C-DOT", "STPI", "ERNET", "BARC", "ONGC IT", "IOCL IT", "NTPC IT", "SAIL IT", "GAIL IT", "Digital India Corp", "MeitY", "NKN", "CERT-In", "C-MET", "NIELIT", "SAMEER", "STQC", "NICSI", "REIL", "KELTRON", "ELCOT", "HARTRON", "Webel", "K-DISC", "MAP_IT", "APTS", "TSSTS", "BSE Tech", "NSEIT", "RBI Tech", "SBI Tech", "LIC IT", "India Post IT", "DoT IT"];
+        
+        let myChart;
+        let historyData = JSON.parse(localStorage.getItem('aiHistory')) || [];
+
+        function saveHistory(resultObj) {
+            historyData.unshift({ id: Date.now(), title: `${resultObj.studentName} - Allocation`, data: resultObj, pinned: false });
+            syncLocalData();
+        }
+
+        function updateChart(prodCount, servCount, govCount) {
+            const ctx = document.getElementById('allocationChart').getContext('2d');
+            if (myChart) myChart.destroy(); 
+            myChart = new Chart(ctx, { 
+                type: 'doughnut', 
+                data: { labels: ['Product Based', 'Service Based', 'Government Sector'], datasets: [{ data: [prodCount, servCount, govCount], backgroundColor: ['#a855f7', '#f59e0b', '#06b6d4'], borderColor: '#0f172a', borderWidth: 2 }] }, 
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: 'white' } } } } 
+            });
+        }
+
+        // Reusable Table Population Logic
+        function populateTable(dataArray) {
+            const tbody = document.querySelector('#allocationTable tbody');
+            tbody.innerHTML = '';
+            if(!dataArray || dataArray.length === 0) { 
+                tbody.innerHTML = '<tr><td colspan="4" style="color:#94a3b8; padding:25px;">No data available. Register and Run Engine.</td></tr>'; 
+                if(myChart) { myChart.destroy(); myChart = null; }
+                return; 
+            }
+
+            let totalProd = 0; let totalServ = 0; let totalGov = 0;
+
+            dataArray.forEach(result => {
+                let comps = result.companyName ? result.companyName.split(',') : [];
+                let rawMatches = result.matchReason ? result.matchReason.split('|') : [];
+
+                function getPercent(cName) {
+                    let clean = cName.trim().toLowerCase();
+                    let found = rawMatches.find(m => m.toLowerCase().includes(clean));
+                    if(found) {
+                        let matchText = found.trim();
+                        if(matchText.toLowerCase().includes("match with")) return matchText.split(/match with/i)[0].trim();
+                        return matchText;
+                    }
+                    return "100%";
+                }
+
+                let prodHTML = '<div class="sector-scroll-box">'; let servHTML = '<div class="sector-scroll-box">'; let govHTML = '<div class="sector-scroll-box">';
+                let pCount = 0; let sCount = 0; let gCount = 0;
+
+                comps.forEach(c => {
+                    let name = c.trim();
+                    if(!name) return;
+                    let pct = getPercent(name);
+                    let block = `<div class="company-item-block [TYPE]"><span class="c-name">${name}</span><span class="c-match">${pct}</span></div>`;
+
+                    if (productBrands.includes(name)) { prodHTML += block.replace('[TYPE]', 'prod-block'); pCount++; totalProd++; } 
+                    else if (governmentBrands.includes(name)) { govHTML += block.replace('[TYPE]', 'gov-block'); gCount++; totalGov++; } 
+                    else { servHTML += block.replace('[TYPE]', 'serv-block'); sCount++; totalServ++; }
+                });
+
+                prodHTML += pCount === 0 ? '<div style="color:#475569; text-align:center; padding:10px;">-</div>' : '';
+                servHTML += sCount === 0 ? '<div style="color:#475569; text-align:center; padding:10px;">-</div>' : '';
+                govHTML += gCount === 0 ? '<div style="color:#475569; text-align:center; padding:10px;">-</div>' : '';
+                prodHTML += '</div>'; servHTML += '</div>'; govHTML += '</div>';
+                
+                tbody.innerHTML += `<tr><td class="student-cell">${result.studentName}</td><td class="sector-cell">${prodHTML}</td><td class="sector-cell">${servHTML}</td><td class="sector-cell">${govHTML}</td></tr>`;
+            });
+            updateChart(totalProd, totalServ, totalGov);
+        }
+
+        async function runAIEngine() {
+            try {
+                let response = await fetch('/api/runAllocation');
+                let data = await response.json();
+                
+                if(data && data.length > 0) {
+                    let latestResult = data[data.length - 1]; // Get only latest run to table & history
+                    populateTable([latestResult]);
+                    saveHistory(latestResult);
+                } else {
+                    populateTable([]);
+                }
+            } catch(e) { alert("Error connecting to server."); }
+        }
+
+        document.getElementById("studentForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            await fetch('/api/register', { method: 'POST', body: new URLSearchParams(fd) });
+            e.target.reset();
+            runAIEngine();
+        });
+
+        document.getElementById("companyForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            await fetch('/api/registerCompany', { method: 'POST', body: new URLSearchParams(fd) });
+            alert("🏢 New Sector Company Added Successfully!");
+            e.target.reset();
+        });
+
+        // --- NEW 3-DOTS MENU & HISTORY LOGIC ---
+
+        function toggleDropdown(event, id) {
+            event.stopPropagation();
+            document.querySelectorAll('.dropdown-content').forEach(d => { if(d.id !== 'dropdown-'+id) d.classList.remove('show'); });
+            document.getElementById('dropdown-'+id).classList.toggle('show');
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.matches('.dots-btn')) {
+                document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+            }
+        }
+
+        function deleteHistory(event, id) {
+            event.stopPropagation();
+            historyData = historyData.filter(h => h.id !== id);
+            syncLocalData();
+        }
+
+        function renameHistory(event, id) {
+            event.stopPropagation();
+            let item = historyData.find(h => h.id === id);
+            let newTitle = prompt("Enter new name for this record:", item.title);
+            if(newTitle && newTitle.trim() !== "") { item.title = newTitle; syncLocalData(); }
+        }
+
+        function pinHistory(event, id) {
+            event.stopPropagation();
+            let item = historyData.find(h => h.id === id);
+            item.pinned = !item.pinned;
+            syncLocalData();
+        }
+
+        function loadHistoryItem(id) {
+            let item = historyData.find(h => h.id === id);
+            if(item) { populateTable([item.data]); closeHistory(); }
+        }
+
+        function syncLocalData() {
+            historyData.sort((a, b) => {
+               if(a.pinned && !b.pinned) return -1;
+               if(!a.pinned && b.pinned) return 1;
+               return b.id - a.id;
+            });
+            localStorage.setItem('aiHistory', JSON.stringify(historyData));
+            renderHistoryUI();
+        }
+
+        function renderHistoryUI() {
+            const list = document.getElementById("historyList");
+            if(!list) return;
+            list.innerHTML = "";
+            historyData.forEach(item => {
+                let pinIcon = item.pinned ? "<span style='color:#f59e0b; margin-right:5px;'>⭐</span>" : "<span style='color:#64748b; margin-right:5px;'>📄</span>";
+                let pinText = item.pinned ? "Unpin" : "Pin to Top";
+                let li = document.createElement("li");
+                li.className = "history-item";
+                li.innerHTML = `
+                    <div class="history-title" onclick="loadHistoryItem(${item.id})">${pinIcon} ${item.title}</div>
+                    <div class="history-actions">
+                        <button class="dots-btn" onclick="toggleDropdown(event, ${item.id})">⋮</button>
+                        <div id="dropdown-${item.id}" class="dropdown-content">
+                            <a onclick="pinHistory(event, ${item.id})">📌 ${pinText}</a>
+                            <a onclick="renameHistory(event, ${item.id})">✏️ Rename</a>
+                            <a style="color:#ef4444;" onclick="deleteHistory(event, ${item.id})">🗑️ Delete</a>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        function clearAllHistory() {
+            if(confirm("Are you sure you want to completely wipe all History AND clear the current table view?")) {
+                localStorage.removeItem('aiHistory');
+                historyData = [];
+                renderHistoryUI();
+                populateTable([]); // Ithu main table-aiyum sethu empty pannidum!
+            }
+        }
+        function openHistory() { document.getElementById("historySidebar").classList.add("open"); renderHistoryUI(); }
+        function closeHistory() { document.getElementById("historySidebar").classList.remove("open"); }
+        window.onload = renderHistoryUI;
+    </script>
+</body>
+</html>

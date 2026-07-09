@@ -1,38 +1,39 @@
 package com.example.demo;
-
-import jakarta.persistence.*; 
-import java.time.LocalDateTime;
+import jakarta.persistence.*;
 
 @Entity
-public class AllocationHistory {
-    
-    @Id 
+public class User {
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private int id;
     
-    private String studentName;
-    private String companyName;
-    private LocalDateTime timestamp;
-
+    private String name;
+    private String email;
+    private String skills;
+    private double cgpa;
     
-    public AllocationHistory() {}
+    private String preference;
+    private boolean ruralQuota;
 
-    public AllocationHistory(String studentName, String companyName) {
-        this.studentName = studentName;
-        this.companyName = companyName;
-        this.timestamp = LocalDateTime.now();
-    }
-
+    // Getters and Setters
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
     
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public String getStudentName() { return studentName; }
-    public void setStudentName(String studentName) { this.studentName = studentName; }
-
-    public String getCompanyName() { return companyName; }
-    public void setCompanyName(String companyName) { this.companyName = companyName; }
-
-    public LocalDateTime getTimestamp() { return timestamp; }
-    public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    
+    public String getSkills() { return skills; }
+    public void setSkills(String skills) { this.skills = skills; }
+    
+    public double getCgpa() { return cgpa; }
+    public void setCgpa(double cgpa) { this.cgpa = cgpa; }
+    
+    public String getPreference() { return preference; }
+    public void setPreference(String preference) { this.preference = preference; }
+    
+    public boolean isRuralQuota() { return ruralQuota; }
+    public void setRuralQuota(boolean ruralQuota) { this.ruralQuota = ruralQuota; }
 }
